@@ -97,7 +97,7 @@ public class Tokenizer {
             return new Token(TokenType.DOUBLE_LITERAL, doublelit, startPos, it.currentPos());
         }
         else{
-            int uint = Integer.parseInt(token.toString());
+            long uint = Long.valueOf(token.toString());
             return new Token(TokenType.UINT_LITERAL, uint, startPos, it.currentPos());
         }
         // -- 前进一个字符，并存储这个字符
