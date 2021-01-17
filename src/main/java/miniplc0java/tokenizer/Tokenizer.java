@@ -57,49 +57,54 @@ public class Tokenizer {
             return lexOperatorOrUnknown();
         }
     }
+    
     private Token lexUINTOrDOUBLE() throws TokenizeError {
-        // 请填空：
-        // 直到查看下一个字符不是数字为止:
-        char c;
-        StringBuilder token = new StringBuilder();
-        Pos startPos = it.currentPos();
-        while(Character.isDigit(c = it.peekChar())){
-            c = it.nextChar();
-            token.append(c);
+
+        Pos tempBegin = new Pos(it.currentPos().row, it.currentPos().col);
+        long uint = 0;
+        while(Character.isDigit(it.peekChar())) {
+            uint = uint * 10 + it.nextChar() - 48;
         }
-        if(c == '.'){
-            c = it.nextChar();
-            token.append(c);
-            if(!Character.isDigit(c = it.peekChar())){
-                throw new TokenizeError(ErrorCode.InvalidInput, it.previousPos());
-            }
-            while(Character.isDigit(c = it.peekChar())){
-                c = it.nextChar();
-                token.append(c);
-            }
-            if(c == 'e' || c == 'E'){
-                it.nextChar();
-                token.append(c);
-                c = it.peekChar();
-                if(c == '+' || c == '-'){
-                    it.nextChar();
-                    token.append(c);
-                }
-                if(!Character.isDigit(c = it.peekChar())){
-                    throw new TokenizeError(ErrorCode.InvalidInput, it.previousPos());
-                }
-                while(Character.isDigit(c = it.peekChar())){
-                    c = it.nextChar();
-                    token.append(c);
-                }
-            }
-            double doublelit = Double.parseDouble(token.toString());
-            return new Token(TokenType.DOUBLE_LITERAL, doublelit, startPos, it.currentPos());
+        if(it.peekChar()!='.')
+            return new Token(TokenType.UINT_LITERAL, uint ,tempBegin ,it.currentPos());
+
+        it.nextChar();
+        double tempDouble = (double)uint;
+        double k = 1.0 / 10;
+        while(Character.isDigit(it.peekChar())) {
+            tempDouble += k * (it.nextChar() - 48);
+
+            k /= 10;
         }
-        else{
-            long uint = Long.valueOf(token.toString());
-            return new Token(TokenType.UINT_LITERAL, uint, startPos, it.currentPos());
+
+        if(it.peekChar() == 'e' || it.peekChar() == 'E') {
+            it.nextChar();
+            char tempSign = '+';
+
+            if(it.peekChar() == '+' || it.peekChar() == '-') {
+                tempSign = it.nextChar();
+            }else {
+
+            }
+
+            if(!Character.isDigit(it.peekChar()))
+                throw new TokenizeError(ErrorCode.InvalidInput, tempBegin);
+            uint = 0;
+            while(Character.isDigit(it.peekChar())) {
+                uint = uint * 10 + it.nextChar() - 48;
+            }
+
+            while(uint != 0) {
+                if(tempSign == '+')tempDouble *= 10;
+                else tempDouble /= 10;
+                uint--;
+            }
         }
+        else {
+
+        }
+        return new Token(TokenType.DOUBLE_LITERAL, tempDouble, tempBegin, it.currentPos());
+    }
         // -- 前进一个字符，并存储这个字符
         //
 
@@ -107,7 +112,6 @@ public class Tokenizer {
         // 解析成功则返回无符号整数类型的token，否则返回编译错误
         //
         // Token 的 Value 应填写数字的值
-    }
     private Token lexSTRINGorUnknwon() throws TokenizeError {
         char c;
         it.nextChar();
